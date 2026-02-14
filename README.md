@@ -1,7 +1,8 @@
 # Crowbar CLI
- Crowbar - GoldSource and Source Engine Modding Tool 
- This fork is based on Crowbar 0.74 and make it a command line tool.
- [Website](https://steamcommunity.com/groups/CrowbarTool)
+ Crowbar - GoldSource and Source Engine Modding Tool <br/>
+ This fork is based on Crowbar 0.74 and make it a command line tool. <br/>
+ 
+ [Corwbar Website](https://steamcommunity.com/groups/CrowbarTool)
  
  IMPORTANT: When providing link to Crowbar, please only use the above website link, because that page provides info and links to everything related to Crowbar.
 
