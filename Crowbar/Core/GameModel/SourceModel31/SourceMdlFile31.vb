@@ -2956,7 +2956,6 @@ Public Class SourceMdlFile31
 
 				For Each aVertex As SourceMdlVertex31 In aModel.theVertexes
 					'vertexInputFileStreamPosition = Me.theInputFileReader.BaseStream.Position
-					Dim aBoneWeight As New SourceMdlBoneWeight31()
 
 					aVertex.boneWeight.bone(0) = Me.theInputFileReader.ReadInt32()
 					aVertex.boneWeight.bone(1) = Me.theInputFileReader.ReadInt32()

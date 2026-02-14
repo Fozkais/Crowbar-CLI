@@ -636,7 +636,6 @@ Public Class Compiler
 		Dim sourcePath As String
 		Dim sourceFileNameWithoutExtension As String
 		Dim targetPathFileName As String
-		Dim createdFolders As New List(Of String)
 		Dim outputPathModelsFolder As String
 		Dim modelsSubpath As String
 		Dim targetPath As String

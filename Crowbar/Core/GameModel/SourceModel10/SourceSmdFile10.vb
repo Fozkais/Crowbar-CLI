@@ -864,7 +864,6 @@ Public Class SourceSmdFile10
 	'	Return rot
 	'End Function
 	Private Function CalcBoneRotation(ByVal frameIndex As Integer, ByVal s As Double, ByVal aBone As SourceMdlBone10, ByVal anAnimation As SourceMdlAnimation10, ByRef rotationQuat As SourceQuaternion) As SourceVector
-		Dim rot As New SourceQuaternion()
 		Dim angleVector As New SourceVector()
 
 		If anAnimation.animationValueOffsets(3) <= 0 Then

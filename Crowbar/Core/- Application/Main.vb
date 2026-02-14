@@ -2,81 +2,75 @@ Imports System.IO
 
 Module Main
 
-	' Entry point of application.
-	Public Function Main() As Integer
-		'' Create a job with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE flag, so that all processes 
-		''	(e.g. HLMV called by Crowbar) associated with the job 
-		''	terminate when the last handle to the job is closed.
-		'' From MSDN: By default, processes created using CreateProcess by a process associated with a job 
-		''	are associated with the job.
-		'TheJob = New WindowsJob()
-		'TheJob.AddProcess(Process.GetCurrentProcess().Handle())
+   Public TheApp As App
 
-		Dim anExceptionHandler As New AppExceptionHandler()
-		AddHandler Application.ThreadException, AddressOf anExceptionHandler.Application_ThreadException
-		' Set the unhandled exception mode to call Application.ThreadException event for all Windows Forms exceptions.
-		Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException)
+    Public Function Main() As Integer
+        AddHandler AppDomain.CurrentDomain.AssemblyResolve, AddressOf ResolveAssemblies
 
-		'Dim appUniqueIdentifier As String
-		'Dim appMutex As System.Threading.Mutex
-		'appUniqueIdentifier = Application.ExecutablePath.Replace("\", "_")
-		'appMutex = New System.Threading.Mutex(False, appUniqueIdentifier)
-		'If appMutex.WaitOne(0, False) = False Then
-		'	appMutex.Close()
-		'	appMutex = Nothing
-		'	'MessageBox.Show("Another instance is already running!")
-		'	Win32Api.PostMessage(CType(Win32Api.WindowsMessages.HWND_BROADCAST, IntPtr), appUniqueWindowsMessageIdentifier, IntPtr.Zero, IntPtr.Zero)
-		'Else
-		'NOTE: Use the Windows Vista and later visual styles (such as rounded buttons).
-		Application.EnableVisualStyles()
-		'NOTE: Needed for keeping Label and Button text rendering correctly.
-		Application.SetCompatibleTextRenderingDefault(False)
+        TheApp = New App()
+        TheApp.Init()
 
-		AddHandler AppDomain.CurrentDomain.AssemblyResolve, AddressOf ResolveAssemblies
+        Dim args As String() = Environment.GetCommandLineArgs()
+        If args.Length < 2 Then
+            Console.WriteLine("Usage: CrowbarCLI.exe <input_mdl> [output_folder]")
+            Return 1
+        End If
 
-		TheApp = New App()
-		'Try
-		TheApp.Init()
-		If TheApp.Settings.AppIsSingleInstance Then
-			SingleInstanceApplication.Run(New MainForm(), AddressOf StartupNextInstanceEventHandler)
-		Else
-			Windows.Forms.Application.Run(MainForm)
-		End If
-		'Catch e As Exception
-		'	MsgBox(e.Message)
-		'Finally
-		'End Try
-		TheApp.Dispose()
-		'End If
+        Dim inputMdl As String = args(1)
+        ' Définition du dossier de sortie (argument 2 ou dossier du MDL par défaut)
+        Dim outputFolder As String = If(args.Length > 2, args(2), IO.Path.GetDirectoryName(inputMdl))
 
-		Return 0
-	End Function
+        ' --- CONFIGURATION OBLIGATOIRE DES SETTINGS ---
+        TheApp.Settings.DecompileMdlPathFileName = inputMdl
+        TheApp.Settings.DecompileMode = InputOptions.File ' Force le mode fichier [cite: 6]
+        
+        ' Forcer l'activation des sorties souhaitées 
+        TheApp.Settings.DecompileQcFileIsChecked = True
+        TheApp.Settings.DecompileReferenceMeshSmdFileIsChecked = True
+        TheApp.Settings.DecompilePhysicsMeshSmdFileIsChecked = True
+        TheApp.Settings.DecompileBoneAnimationSmdFilesIsChecked = True
+        
+        ' Paramètres de dossier de sortie
+        TheApp.Settings.DecompileOutputFolderOption = DecompileOutputPathOptions.WorkFolder
+        TheApp.Settings.DecompileOutputFullPath = outputFolder
 
-	Private Sub StartupNextInstanceEventHandler(ByVal sender As Object, ByVal e As SingleInstanceEventArgs)
-		If e.MainForm.WindowState = FormWindowState.Minimized Then
-			e.MainForm.WindowState = FormWindowState.Normal
-		End If
-		e.MainForm.Activate()
-		CType(e.MainForm, MainForm).Startup(e.CommandLine)
-	End Sub
+        ' --- INITIALISATION DU DÉCOMPILATEUR ---
+        Dim decompiler As New Decompiler()
+        
+        ' IMPORTANT : Initialisation manuelle du chemin de sortie [cite: 3]
+        ' Dans le mode normal, c'est fait par DoWork, ici on doit le faire à la main
+        decompiler.theOutputPath = outputFolder
 
-	Private Function ResolveAssemblies(sender As Object, e As System.ResolveEventArgs) As Reflection.Assembly
-		Dim desiredAssembly As Reflection.AssemblyName = New Reflection.AssemblyName(e.Name)
-		'If desiredAssembly.Name = "SevenZipSharp" Then
-		'	Return Reflection.Assembly.Load(My.Resources.SevenZipSharp)
-		'ElseIf desiredAssembly.Name = "Steamworks.NET" Then
-		'	Return Reflection.Assembly.Load(My.Resources.Steamworks_NET)
-		'Else
-		'	Return Nothing
-		'End If
-		If desiredAssembly.Name = "Steamworks.NET" Then
-			Return Reflection.Assembly.Load(My.Resources.Steamworks_NET)
-		Else
-			Return Nothing
-		End If
-	End Function
+        Try
+            Console.WriteLine("Target MDL: " & inputMdl)
+            Console.WriteLine("Output Folder: " & outputFolder)
 
-	'Public TheJob As WindowsJob
-	Public TheApp As App
+            ' Lancement de la décompilation [cite: 6]
+            Dim result As AppEnums.StatusMessage = decompiler.Decompile()
+            
+            If result = StatusMessage.Success Then
+                Console.WriteLine(">>> Decompilation Successful!")
+                Return 0
+            Else
+                Console.WriteLine(">>> Failed with status: " & result.ToString())
+                Return 1
+            End If
+        Catch ex As Exception
+            Console.WriteLine("CRITICAL ERROR: " & ex.Message)
+            Return 1
+        Finally
+            TheApp.Dispose()
+        End Try
+    End Function
+
+    ' Gardez la fonction ResolveAssemblies telle quelle
+    Private Function ResolveAssemblies(sender As Object, e As System.ResolveEventArgs) As Reflection.Assembly
+        Dim desiredAssembly As Reflection.AssemblyName = New Reflection.AssemblyName(e.Name)
+        If desiredAssembly.Name = "Steamworks.NET" Then
+            Return Reflection.Assembly.Load(My.Resources.Steamworks_NET)
+        Else
+            Return Nothing
+        End If
+    End Function
 
 End Module

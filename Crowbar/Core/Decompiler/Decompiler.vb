@@ -152,7 +152,7 @@ Public Class Decompiler
 		Return decompileResultInfo
 	End Function
 
-	Private Function Decompile() As AppEnums.StatusMessage
+	Public Function Decompile() As AppEnums.StatusMessage
 		Dim status As AppEnums.StatusMessage = StatusMessage.Success
 
 		Me.theSkipCurrentModelIsActive = False
@@ -1079,9 +1079,9 @@ Public Class Decompiler
 
 	Private theSkipCurrentModelIsActive As Boolean
 	Private theInputMdlPathName As String
-	Private theOutputPath As String
+	Public theOutputPath As String
 	Private theModelOutputPath As String
-	Private theOutputPathOrModelOutputFileName As String
+	Public theOutputPathOrModelOutputFileName As String
 
 	Private theLogFileStream As StreamWriter
 
